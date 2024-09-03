@@ -1,0 +1,788 @@
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Particle Interaction Laboratory - Exploration of the Brilliant Particle Universe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap');
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Noto Sans TC', sans-serif;
+    background: #000;
+    color: #fff;
+  }
+
+  #particleCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 0 20px rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  .controls:hover {
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 30px rgba(255,255,255,0.2);
+  }
+
+  .control-group {
+    margin-bottom: 15px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255,255,255,0.5);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.1);
+    outline: none;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: -407px 0 0 400px #4a90e2;
+  }
+
+  .color-picker {
+    width: 100%;
+    height: 40px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+
+  #cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    pointer-events: none;
+    mix-blend-mode: difference;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+  }
+
+  .preset-btn {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    margin: 5px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .preset-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+  }
+
+  .tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .info-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .info-btn:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .info-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: rgba(0,0,0,0.9);
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 80%;
+    max-height: 80%;
+    overflow-y: auto;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+
+  .info-panel.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  #fpsCounter {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  .advanced-controls {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .advanced-controls h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .checkbox-group label {
+    margin-left: 10px;
+    margin-bottom: 0;
+  }
+
+  .shape-select {
+    width: 100%;
+    padding: 5px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+
+  #particleImage {
+    display: none;
+  }
+
+  .file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+
+  .file-input-wrapper input[type=file] {
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+  }
+
+  .file-input-wrapper .btn {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .file-input-wrapper .btn:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  @media (max-width: 768px) {
+    .controls {
+      width: 100%;
+      height: auto;
+      max-height: 50%;
+      bottom: 0;
+      top: auto;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+
+    .control-group {
+      margin-bottom: 10px;
+    }
+
+    .advanced-controls h2 {
+      font-size: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="controls">
+    <h1>Advanced particle interaction control panel</h1>
+    <div class="control-group">
+      <label for="particleCount">Number of particles <span id="particleCountValue">1000</span></label>
+      <input type="range" id="particleCount" min="100" max="5000" value="1000">
+    </div>
+    <div class="control-group">
+      <label for="particleSize">Particle size <span id="particleSizeValue">2</span></label>
+      <input type="range" id="particleSize" min="1" max="10" value="2" step="0.1">
+    </div>
+    <div class="control-group">
+      <label for="particleSpeed">Particle speed <span id="particleSpeedValue">1</span></label>
+      <input type="range" id="particleSpeed" min="0.1" max="5" value="1" step="0.1">
+    </div>
+    <div class="control-group">
+      <label for="particleColor">Particle color</label>
+      <input type="color" id="particleColor" class="color-picker" value="#ffffff">
+    </div>
+    <div class="control-group">
+      <label for="connectionDistance">Connection distance <span id="connectionDistanceValue">100</span></label>
+      <input type="range" id="connectionDistance" min="50" max="200" value="100">
+    </div>
+    <div class="control-group">
+      <label for="gravityStrength">Gravity strength <span id="gravityStrengthValue">0</span></label>
+      <input type="range" id="gravityStrength" min="0" max="1" value="0" step="0.01">
+    </div>
+    <div class="preset-container">
+      <button class="preset-btn" data-preset="gentle">Soft</button>
+      <button class="preset-btn" data-preset="energetic">Vitality</button>
+      <button class="preset-btn" data-preset="cosmic">Universe</button>
+    </div>
+    <div class="advanced-controls">
+      <h2>Advanced settings</h2>
+      <div class="control-group">
+        <label for="particleShape">Particle shape</label>
+        <select id="particleShape" class="shape-select">
+          <option value="circle">Round</option>
+          <option value="square">Square</option>
+          <option value="triangle">Triangle</option>
+          <option value="star">Star shape</option>
+          <option value="image">Picture</option>
+        </select>
+      </div>
+      <div class="file-input-wrapper" id="imageUploadWrapper" style="display: none;">
+        <button class="btn">Upload pictures</button>
+        <input type="file" id="particleImage" accept="image/*">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="enableTrails">
+        <label for="enableTrails">Enable particle tracks</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="enableGlow">
+        <label for="enableGlow">Enable particle glow effect</label>
+      </div>
+      <div class="control-group">
+        <label for="particleOpacity">Particle transparency <span id="particleOpacityValue">1</span></label>
+        <input type="range" id="particleOpacity" min="0" max="1" value="1" step="0.1">
+      </div>
+      <div class="control-group">
+        <label for="rotationSpeed">Rotation speed <span id="rotationSpeedValue">0</span></label>
+        <input type="range" id="rotationSpeed" min="0" max="0.1" value="0" step="0.001">
+      </div>
+    </div>
+    <button class="info-btn">?</button>
+  </div>
+
+  <div id="cursor"></div>
+
+  <div class="tooltip"></div>
+
+  <div class="info-panel">
+    <h2>Advanced Particle Interaction Laboratory User Guide</h2>
+    <p>Welcome to the Advanced Particle Interaction Lab! Here you can explore more creative particle effects to create a unique visual experience.</p>
+    <ul>
+      <li><strong>Particle shape</strong>：Choose from different particle shapes, including circles, squares, triangles, stars, and even upload your own images.</li>
+      <li><strong>Particle trajectories</strong>：When enabled, particles leave dynamic trails, creating a flowing visual effect.</li>
+      <li><strong>Particles glow</strong>：Add a soft halo effect to particles to enhance visual impact.</li>
+      <li><strong>Particle transparency</strong>：Adjust the transparency of particles to create layering and depth.</li>
+      <li><strong>Rotation speed</strong>：Control the rotation of particles to increase dynamics and interest.</li>
+    </ul>
+    <p>Combining these new features with the previous basic controls allows you to create even more colorful particle effects. Explore different combinations and discover unexpected visual surprises!</p>
+    <button class="close-btn">&times;</button>
+  </div>
+
+  <div id="fpsCounter">FPS: 60</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <script>
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    let animationId;
+
+    const controls = {
+      particleCount: 1000,
+      particleSize: 2,
+      particleSpeed: 1,
+      particleColor: '#ffffff',
+      connectionDistance: 100,
+      gravityStrength: 0,
+      particleShape: 'circle',
+      enableTrails: false,
+      enableGlow: false,
+      particleOpacity: 1,
+      rotationSpeed: 0
+    };
+
+    let particleImage = new Image();
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * controls.particleSpeed;
+        this.vy = (Math.random() - 0.5) * controls.particleSpeed;
+        this.size = controls.particleSize;
+        this.color = controls.particleColor;
+        this.opacity = controls.particleOpacity;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.trail = [];
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Apply gravity
+        this.vy += controls.gravityStrength * 0.1;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+        // Update rotation
+        this.rotation += controls.rotationSpeed;
+
+        // Update trail
+        if (controls.enableTrails) {
+          this.trail.push({ x: this.x, y: this.y });
+          if (this.trail.length > 20) {
+            this.trail.shift();
+          }
+        } else {
+          this.trail = [];
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+
+        // Draw trail
+        if (controls.enableTrails) {
+          ctx.beginPath();
+          ctx.moveTo(this.trail[0].x, this.trail[0].y);
+          for (let i = 1; i < this.trail.length; i++) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+          }
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = this.size / 2;
+          ctx.stroke();
+        }
+
+        // Draw glow effect
+        if (controls.enableGlow) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = this.color;
+        }
+
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        switch (controls.particleShape) {
+          case 'square':
+            ctx.fillStyle = this.color;
+            ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+            break;
+          case 'triangle':
+            ctx.beginPath();
+            ctx.moveTo(0, -this.size / 2);
+            ctx.lineTo(-this.size / 2, this.size / 2);
+            ctx.lineTo(this.size / 2, this.size / 2);
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            break;
+          case 'star':
+            const spikes = 5;
+            const outerRadius = this.size;
+            const innerRadius = this.size / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -outerRadius);
+            for (let i = 0; i < spikes * 2; i++) {
+              const radius = i % 2 === 0 ? outerRadius : innerRadius;
+              const angle = (Math.PI * 2 * i) / (spikes * 2);
+              ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+            }
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            break;
+          case 'image':
+            if (particleImage.complete) {
+              ctx.drawImage(particleImage, -this.size / 2, -this.size / 2, this.size, this.size);
+            }
+            break;
+          default: // circle
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function createParticles() {
+      particles = [];
+      for (let i = 0; i < controls.particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function drawConnections() {
+      ctx.strokeStyle = controls.particleColor;
+      ctx.lineWidth = 0.1;
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < controls.connectionDistance) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    let lastTime = 0;
+    let fpsUpdateCounter = 0;
+    const fpsUpdateInterval = 10;
+
+    function animate(currentTime) {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawConnections();
+
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      // Update FPS counter
+      fpsUpdateCounter++;
+      if (fpsUpdateCounter >= fpsUpdateInterval) {
+        const fps = Math.round(1000 / deltaTime);
+        document.getElementById('fpsCounter').textContent = `FPS: ${fps}`;
+        fpsUpdateCounter = 0;
+      }
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function initializeControls() {
+      const controlInputs = document.querySelectorAll('input[type="range"], input[type="color"], input[type="checkbox"], select');
+      controlInputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+          const control = e.target.id;
+          let value = e.target.type === 'checkbox' ? e.target.checked : 
+                      e.target.type === 'range' ? parseFloat(e.target.value) : 
+                      e.target.value;
+
+          controls[control] = value;
+
+          if (e.target.type === 'range') {
+            document.getElementById(`${control}Value`).textContent = value;
+          }
+
+          if (control === 'particleCount') {
+            createParticles();
+          } else if (['particleSize', 'particleSpeed', 'particleColor', 'particleOpacity'].includes(control)) {
+            particles.forEach(p => {
+              if (control === 'particleSize') p.size = value;
+              if (control === 'particleSpeed') {
+                p.vx = (Math.random() - 0.5) * value;
+                p.vy = (Math.random() - 0.5) * value;
+              }
+              if (control === 'particleColor') p.color = value;
+              if (control === 'particleOpacity') p.opacity = value;
+            });
+          } else if (control === 'particleShape') {
+            if (value === 'image') {
+              document.getElementById('imageUploadWrapper').style.display = 'block';
+            } else {
+              document.getElementById('imageUploadWrapper').style.display = 'none';
+            }
+          }
+        });
+      });
+
+      // Image upload
+      document.getElementById('particleImage').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            particleImage.src = event.target.result;
+          }
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Preset buttons
+      const presetButtons = document.querySelectorAll('.preset-btn');
+      presetButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const preset = btn.dataset.preset;
+          applyPreset(preset);
+        });
+      });
+
+      // Info button
+      const infoBtn = document.querySelector('.info-btn');
+      const infoPanel = document.querySelector('.info-panel');
+      const closeBtn = document.querySelector('.close-btn');
+
+      infoBtn.addEventListener('click', () => {
+        infoPanel.classList.add('active');
+      });
+
+      closeBtn.addEventListener('click', () => {
+        infoPanel.classList.remove('active');
+      });
+    }
+
+    function applyPreset(preset) {
+      switch (preset) {
+        case 'gentle':
+          controls.particleCount = 800;
+          controls.particleSize = 2;
+          controls.particleSpeed = 0.5;
+          controls.particleColor = '#4a90e2';
+          controls.connectionDistance = 100;
+          controls.gravityStrength = 0.02;
+          controls.particleShape = 'circle';
+          controls.enableTrails = false;
+          controls.enableGlow = true;
+          controls.particleOpacity = 0.7;
+          controls.rotationSpeed = 0.001;
+          break;
+        case 'energetic':
+          controls.particleCount = 1200;
+          controls.particleSize = 2.5;
+          controls.particleSpeed = 1.5;
+          controls.particleColor = '#ff6b6b';
+          controls.connectionDistance = 80;
+          controls.gravityStrength = 0;
+          controls.particleShape = 'star';
+          controls.enableTrails = true;
+          controls.enableGlow = true;
+          controls.particleOpacity = 1;
+          controls.rotationSpeed = 0.005;
+          break;
+        case 'cosmic':
+          controls.particleCount = 1500;
+          controls.particleSize = 1.5;
+          controls.particleSpeed = 0.3;
+          controls.particleColor = '#ffffff';
+          controls.connectionDistance = 120;
+          controls.gravityStrength = 0.01;
+          controls.particleShape = 'circle';
+          controls.enableTrails = true;
+          controls.enableGlow = true;
+          controls.particleOpacity = 0.8;
+          controls.rotationSpeed = 0.002;
+          break;
+      }
+
+      // Update UI
+      Object.keys(controls).forEach(key => {
+        const input = document.getElementById(key);
+        if (input) {
+          if (input.type === 'checkbox') {
+            input.checked = controls[key];
+          } else {
+            input.value = controls[key];
+            if (input.type === 'range') {
+              document.getElementById(`${key}Value`).textContent = controls[key];
+            }
+          }
+        }
+      });
+
+      createParticles();
+    }
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      createParticles();
+    });
+
+    // Mouse interaction
+    canvas.addEventListener('mousemove', (e) => {
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      particles.forEach(particle => {
+        const dx = mouseX - particle.x;
+        const dy = mouseY - particle.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < 100) {
+          gsap.to(particle, {
+            x: particle.x - dx * 0.1,
+            y: particle.y - dy * 0.1,
+            duration: 0.5,
+            ease: "power2.out"
+          });
+        }
+      });
+    });
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = `${e.clientX}px`;
+      cursor.style.top = `${e.clientY}px`;
+    });
+
+    document.addEventListener('click', () => {
+      cursor.style.transform = 'scale(0.8)';
+      setTimeout(() => {
+        cursor.style.transform = 'scale(1)';
+      }, 100);
+    });
+
+    // Tooltip
+    const tooltip = document.querySelector('.tooltip');
+    const controlLabels = document.querySelectorAll('.control-group label, .checkbox-group label');
+
+    controlLabels.forEach(label => {
+      label.addEventListener('mouseenter', (e) => {
+        const rect = e.target.getBoundingClientRect();
+        tooltip.style.left = `${rect.left}px`;
+        tooltip.style.top = `${rect.bottom + 5}px`;
+        tooltip.textContent = getTooltipText(e.target.htmlFor);
+        tooltip.style.opacity = 1;
+      });
+
+      label.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = 0;
+      });
+    });
+
+    function getTooltipText(controlId) {
+      switch (controlId) {
+        case 'particleCount':
+          return 'Adjust the total number of particles in the screen';
+        case 'particleSize':
+          return 'Change the size of each particle';
+        case 'particleSpeed':
+          return 'Control how fast particles move';
+        case 'particleColor':
+          return 'Select particle color';
+        case 'connectionDistance':
+          return 'Set the maximum distance between particles to create a connection';
+        case 'gravityStrength':
+          return 'Adjust downward gravity effect';
+        case 'particleShape':
+          return 'Select particle shape';
+        case 'enableTrails':
+          return 'Enable particle motion trajectory effects';
+        case 'enableGlow':
+          return 'Add a glow effect to particles';
+        case 'particleOpacity':
+          return 'Transparency of the whole particle';
+        case 'rotationSpeed':
+          return 'Control the speed of particle rotation';
+        default:
+          return '';
+      }
+    }
+
+    createParticles();
+    initializeControls();
+    animate();
+  </script>
+</body>
+</html>
